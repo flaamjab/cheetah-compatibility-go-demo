@@ -17,12 +17,19 @@ var (
 )
 
 func main() {
+	err := connect(addr)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func connect(addr string) error {
 	config := tls.Config{}
 	creds := grpc.WithTransportCredentials(credentials.NewTLS(&config))
 	conn, err := grpc.Dial(addr, creds)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to connect to %s: %s\n", addr, err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to %s: %s", addr, err)
 	}
 	defer conn.Close()
 
@@ -30,9 +37,10 @@ func main() {
 	request := compat.CheckCompatibilityRequest{Version: "0.0.11"}
 	result, err := client.CheckCompatibility(context.Background(), &request)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to check compatibility:", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to check compatibility: %s", err)
 	}
 
 	fmt.Println(result.Status)
+
+	return nil
 }
